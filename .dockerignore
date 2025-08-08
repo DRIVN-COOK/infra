@@ -1,0 +1,8 @@
+# Ne JAMAIS copier les modules locaux
+**/node_modules
+# autres trucs inutiles
+.git
+.gitignore
+infra/.env
+infra/.npm_token
+**/.DS_Store
