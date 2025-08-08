@@ -1,24 +1,21 @@
 server {
-    listen 80;
-    server_name _;
+    listen ${NGINX_PORT};
+    server_name ${NGINX_SERVER_NAME};
 
-    # Front-office accessible sur /
     location / {
         root /usr/share/nginx/html;
         index index.html;
         try_files $uri $uri/ /index.html;
     }
 
-    # Back-office accessible sur /back
     location /back/ {
         alias /usr/share/nginx/html/back/;
         index index.html;
         try_files $uri $uri/ /index.html;
     }
 
-    # API proxy
     location /api/ {
-        proxy_pass http://api:3000/;
+        proxy_pass http://api:${PORT_API}/;
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection 'upgrade';
