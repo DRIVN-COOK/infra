@@ -44,4 +44,7 @@ FROM nginx:alpine
 COPY --from=front-builder /app/dist /usr/share/nginx/html/
 COPY --from=back-builder /app/dist /usr/share/nginx/html/back/
 COPY infra/nginx/default.conf.template /etc/nginx/conf.d/default.conf.template
-CMD ["/bin/sh", "-c", "envsubst '$NGINX_PORT $NGINX_SERVER_NAME $PORT_API' < /etc/nginx/conf.d/default.conf.template > /etc/nginx/conf.d/default.conf && exec nginx -g 'daemon off;'"]
+CMD ["/bin/sh", "-c", "\
+  envsubst '$FRONT_SERVER_NAME $BACK_SERVER_NAME $API_PREFIX $API_UPSTREAM' \
+    < /etc/nginx/conf.d/default.conf.template > /etc/nginx/conf.d/default.conf && \
+  exec nginx -g 'daemon off;'"]

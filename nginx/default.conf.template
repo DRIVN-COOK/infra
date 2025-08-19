@@ -1,25 +1,45 @@
+# FRONT  http://app.localhost
 server {
-    listen ${NGINX_PORT};
-    server_name ${NGINX_SERVER_NAME};
+  listen 80;
+  server_name ${FRONT_SERVER_NAME};
 
-    location / {
-        root /usr/share/nginx/html;
-        index index.html;
-        try_files $uri $uri/ /index.html;
-    }
+  root /usr/share/nginx/html;
+  index index.html;
 
-    location /back/ {
-        alias /usr/share/nginx/html/back/;
-        index index.html;
-        try_files $uri $uri/ /index.html;
-    }
+  location / {
+    try_files $uri $uri/ /index.html;
+  }
 
-    location /api/ {
-        proxy_pass http://api:${PORT_API}/;
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection 'upgrade';
-        proxy_set_header Host $host;
-        proxy_cache_bypass $http_upgrade;
-    }
+  # Proxy API (même origin côté navigateur)
+  location ^~ ${API_PREFIX} {
+    proxy_pass http://${API_UPSTREAM}/;
+    proxy_http_version 1.1;
+    proxy_set_header Upgrade $http_upgrade;
+    proxy_set_header Connection "upgrade";
+    proxy_set_header Host $host;
+    proxy_cache_bypass $http_upgrade;
+  }
+}
+
+# BACK   http://admin.localhost
+server {
+  listen 80;
+  server_name ${BACK_SERVER_NAME};
+
+  root /usr/share/nginx/html/back;
+  index index.html;
+
+  location / {
+    try_files $uri $uri/ /index.html;
+  }
+
+  # Proxy API
+  location ^~ ${API_PREFIX} {
+    proxy_pass http://${API_UPSTREAM}/;
+    proxy_http_version 1.1;
+    proxy_set_header Upgrade $http_upgrade;
+    proxy_set_header Connection "upgrade";
+    proxy_set_header Host $host;
+    proxy_cache_bypass $http_upgrade;
+  }
 }

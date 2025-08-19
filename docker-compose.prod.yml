@@ -24,9 +24,10 @@ services:
       secrets:
         - npm_token 
     environment:
-      - NGINX_PORT=${NGINX_PORT}
-      - NGINX_SERVER_NAME=${NGINX_SERVER_NAME}
-      - PORT_API=${PORT_API}
+      - FRONT_SERVER_NAME=${FRONT_SERVER_NAME}
+      - BACK_SERVER_NAME=${BACK_SERVER_NAME}
+      - API_PREFIX=${API_PREFIX}
+      - API_UPSTREAM=${API_UPSTREAM}
     container_name: nginx
     ports:
       - "${NGINX_PORT}:80"
