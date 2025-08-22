@@ -24,8 +24,7 @@ services:
       context: ../
       dockerfile: infra/docker/nginx.Dockerfile
       secrets:
-        - source: npm_token
-          id: npm_token
+        - npm_token
     environment:
       - FRONT_SERVER_NAME=${FRONT_SERVER_NAME}
       - BACK_SERVER_NAME=${BACK_SERVER_NAME}
