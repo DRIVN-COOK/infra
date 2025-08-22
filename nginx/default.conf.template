@@ -1,14 +1,57 @@
-# FRONT  http://app.localhost
+# ============================
+# NGINX - DRIVNCOOK PROD
+# ============================
+
+# --------- HTTP (80) : ACME + REDIRECT ---------
+
+# FRONT (drivncook.ovh) - HTTP -> HTTPS, en gardant le challenge ACME
 server {
   listen 80;
-  server_name ${FRONT_SERVER_NAME};
+  server_name drivncook.ovh;
 
+  # ACME http-01 challenge (Certbot webroot)
   location ^~ /.well-known/acme-challenge/ {
     root /var/www/certbot;
     default_type "text/plain";
     allow all;
   }
 
+  # Tout le reste redirigé en HTTPS
+  location / { return 301 https://$host$request_uri; }
+}
+
+# BACK (admin.drivncook.ovh) - HTTP -> HTTPS, en gardant le challenge ACME
+server {
+  listen 80;
+  server_name admin.drivncook.ovh;
+
+  # ACME http-01 challenge (Certbot webroot)
+  location ^~ /.well-known/acme-challenge/ {
+    root /var/www/certbot;
+    default_type "text/plain";
+    allow all;
+  }
+
+  # Tout le reste redirigé en HTTPS
+  location / { return 301 https://$host$request_uri; }
+}
+
+
+# --------- HTTPS (443) ---------
+
+# FRONT (drivncook.ovh)
+server {
+  listen 443 ssl;
+  http2 on;
+  server_name drivncook.ovh;
+
+  # Cert SAN émis (contient drivncook.ovh et admin.drivncook.ovh)
+  ssl_certificate     /etc/letsencrypt/live/drivncook.ovh/fullchain.pem;
+  ssl_certificate_key /etc/letsencrypt/live/drivncook.ovh/privkey.pem;
+  ssl_protocols TLSv1.2 TLSv1.3;
+  ssl_prefer_server_ciphers off;
+
+  # SPA front
   root /usr/share/nginx/html;
   index index.html;
 
@@ -16,30 +59,31 @@ server {
     try_files $uri $uri/ /index.html;
   }
 
-  # Proxy API (même origin côté navigateur)
-  location ^~ ${API_PREFIX} {
-    proxy_pass http://${API_UPSTREAM}/;
+  # Proxy API (same-origin, prefix /api -> api:3000/)
+  location ^~ /api/ {
+    proxy_pass http://api:3000/;
     proxy_http_version 1.1;
     proxy_set_header Upgrade $http_upgrade;
     proxy_set_header Connection "upgrade";
     proxy_set_header Host $host;
-    proxy_set_header X-Forwarded-Proto $scheme;
+    proxy_set_header X-Forwarded-Proto https;
     proxy_cache_bypass $http_upgrade;
   }
 }
 
-# BACK   http://admin.localhost
+# BACK (admin.drivncook.ovh)
 server {
-  listen 80;
-  server_name ${BACK_SERVER_NAME};
+  listen 443 ssl;
+  http2 on;
+  server_name admin.drivncook.ovh;
 
-  # ACME http-01 challenge
-  location ^~ /.well-known/acme-challenge/ {
-    root /var/www/certbot;
-    default_type "text/plain";
-    allow all;
-  }
+  # Même cert SAN (stocké sous le premier domaine)
+  ssl_certificate     /etc/letsencrypt/live/drivncook.ovh/fullchain.pem;
+  ssl_certificate_key /etc/letsencrypt/live/drivncook.ovh/privkey.pem;
+  ssl_protocols TLSv1.2 TLSv1.3;
+  ssl_prefer_server_ciphers off;
 
+  # SPA back (servi depuis /back)
   root /usr/share/nginx/html/back;
   index index.html;
 
@@ -48,13 +92,13 @@ server {
   }
 
   # Proxy API
-  location ^~ ${API_PREFIX} {
-    proxy_pass http://${API_UPSTREAM}/;
+  location ^~ /api/ {
+    proxy_pass http://api:3000/;
     proxy_http_version 1.1;
     proxy_set_header Upgrade $http_upgrade;
     proxy_set_header Connection "upgrade";
     proxy_set_header Host $host;
-    proxy_set_header X-Forwarded-Proto $scheme;
+    proxy_set_header X-Forwarded-Proto https;
     proxy_cache_bypass $http_upgrade;
   }
 }

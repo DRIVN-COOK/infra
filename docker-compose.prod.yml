@@ -23,6 +23,10 @@ services:
     build:
       context: ../
       dockerfile: infra/docker/nginx.Dockerfile
+      secrets:
+        - npm_token
+      args:
+        NPM_TOKEN: ${NPM_TOKEN-}
     environment:
       - FRONT_SERVER_NAME=${FRONT_SERVER_NAME}
       - BACK_SERVER_NAME=${BACK_SERVER_NAME}
@@ -34,7 +38,7 @@ services:
     ports:
       - "${NGINX_PORT}:80"
       # on exposera 443 après ajout des blocs SSL :
-      # - "443:443"
+      - "443:443"
     volumes:
       # pour les challenges ACME (http-01)
       - certbot-www:/var/www/certbot
