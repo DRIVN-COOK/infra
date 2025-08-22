@@ -3,6 +3,12 @@ server {
   listen 80;
   server_name ${FRONT_SERVER_NAME};
 
+  location ^~ /.well-known/acme-challenge/ {
+    root /var/www/certbot;
+    default_type "text/plain";
+    allow all;
+  }
+
   root /usr/share/nginx/html;
   index index.html;
 
@@ -17,6 +23,7 @@ server {
     proxy_set_header Upgrade $http_upgrade;
     proxy_set_header Connection "upgrade";
     proxy_set_header Host $host;
+    proxy_set_header X-Forwarded-Proto $scheme;
     proxy_cache_bypass $http_upgrade;
   }
 }
@@ -25,6 +32,13 @@ server {
 server {
   listen 80;
   server_name ${BACK_SERVER_NAME};
+
+  # ACME http-01 challenge
+  location ^~ /.well-known/acme-challenge/ {
+    root /var/www/certbot;
+    default_type "text/plain";
+    allow all;
+  }
 
   root /usr/share/nginx/html/back;
   index index.html;
@@ -40,6 +54,7 @@ server {
     proxy_set_header Upgrade $http_upgrade;
     proxy_set_header Connection "upgrade";
     proxy_set_header Host $host;
+    proxy_set_header X-Forwarded-Proto $scheme;
     proxy_cache_bypass $http_upgrade;
   }
 }
