@@ -5,6 +5,9 @@ COPY api/package*.json ./
 RUN npm install
 COPY api/prisma ./prisma
 RUN npm run prisma:generate
+RUN npm run prisma:push
+RUN npm run prisma:migrate
+RUN npm run seed
 COPY api .
 RUN npm run build
 
